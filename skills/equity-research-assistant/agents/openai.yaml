@@ -1,0 +1,4 @@
+interface:
+  display_name: "Equity Research Assistant"
+  short_description: "A/H stock research workflows"
+  default_prompt: "Collect and analyze A-share or Hong Kong stock information with sources, risks, and assumptions."

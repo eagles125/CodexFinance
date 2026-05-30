@@ -1,0 +1,17 @@
+.env
+*.db
+*.sqlite
+*.sqlite3
+*.log
+__pycache__/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+data/**/*.csv
+data/**/*.xlsx
+data/**/*.pdf
+data/**/*.parquet
+notes/private/
+reports/

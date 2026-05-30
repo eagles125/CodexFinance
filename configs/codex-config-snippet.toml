@@ -1,0 +1,13 @@
+# Merge this into C:\Users\Administrator\.codex\config.toml.
+
+[mcp_servers.codex_finance]
+command = "python"
+args = ["E:\\ai\\CodexFinance\\mcp\\codex-finance-mcp\\server.py"]
+startup_timeout_sec = 120
+
+[mcp_servers.codex_finance.env]
+CODEX_FINANCE_HOME = "E:\\ai\\CodexFinance"
+PYTHONIOENCODING = "utf-8"
+
+# Optional data keys. Prefer setting real keys in your local environment instead of committing them.
+# ALPHA_VANTAGE_API_KEY = ""
