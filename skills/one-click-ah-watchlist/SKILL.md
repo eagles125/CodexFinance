@@ -1,92 +1,99 @@
 ---
 name: one-click-ah-watchlist
-description: Generate a one-click A-share and Hong Kong market research watchlist that combines stocks, ETFs, and mutual funds, with no more than five items per category and no more than ten total. Use when Codex is asked to produce a compact investment observation pool, combine Buffett-style quality value, A-share super-investor clues, red-flag checks, Xueqiu core-pool screening, or Zhihu-style stock selection heuristics. This skill is for research assistance only, not personalized financial advice.
+description: 一键生成 A 股/港股研究观察池，覆盖股票、ETF、基金，按统一综合得分排序，每类不超过 5 支，合计不超过 10 支。用于股票/ETF/基金组合观察池、巴菲特质量价值、A股牛散线索、A股排雷、雪球核心池交叉验证、知乎式基本面选股原则、5年日K走势展示等场景。本技能仅用于投资研究辅助，不构成个性化投资建议。
 ---
 
-# One Click A/H Watchlist
+# 一键 A股/港股观察池
 
-## Overview
+## 概述
 
-Use this skill to create a compact research watchlist across stocks, ETFs, and funds. The watchlist must be small enough to review manually: each category no more than 5 items and total no more than 10 items.
+使用本技能生成一个足够小、便于人工跟踪的观察池，覆盖股票、ETF 和基金。输出必须包含综合得分、打分权重、入选理由、主要风险，并为入选股票生成近 5 年日 K 数据和走势图。
 
-## Strategy Blend
+## 核心约束
 
-Combine five lenses:
+- 股票、ETF、基金每类不超过 5 支。
+- 三类合计不超过 10 支。
+- 按综合得分排序，取 Top 10 以内。
+- 使用“观察池”表达，不使用“推荐买入”。
+- 必须说明数据来源、时间、缺失项和需要人工复核的地方。
 
-1. Buffett quality value:
-   - Durable business, high and stable ROE, good free cash flow, low leverage, understandable model, reasonable valuation.
-2. A-share super-investor clues:
-   - Institutional/shareholder changes, buybacks, equity incentives, hidden champions, cycle reversal, industry inflection.
-3. Red-flag checker:
-   - ST/delisting risk, pledge risk, cash-flow/profit divergence, high receivables/inventory, goodwill impairment, regulatory inquiry, frequent reductions.
-4. Independent primary stock screening:
-   - Build the stock list from live financial and quote data using this skill's own scorecard. Do not directly reuse `xueqiu-core-screen` output as the stock source.
-5. Zhihu high-vote strategy summary:
-   - Prefer simple, repeatable logic; buy good companies at acceptable prices; avoid stories without financial confirmation; use industry comparison; combine qualitative business judgment with quantitative filters; keep watchlists small and verify continuously.
-6. Xueqiu core-pool cross-check:
-   - Use `xueqiu-core-pool-screener` only as a secondary validation label. Mark whether a selected stock also appears in the Xueqiu core-pool result, but do not require it.
+## 策略组合
 
-## Output Rules
+本技能融合以下方法：
 
-- Total items: no more than 10.
-- Stocks: no more than 5.
-- ETFs: no more than 5.
-- Funds: no more than 5.
-- Use "观察池" language, not "推荐买入".
-- Include source date and missing data warnings.
-- Add a short "why included" and "what can go wrong" for every item.
-- Prefer diversified exposure:
-  - 3-5 stocks for alpha candidates.
-  - 2-4 ETFs for theme/broad-market exposure.
-  - 1-3 funds for manager/strategy exposure.
+1. 巴菲特式质量价值：好生意、现金流、ROE、低杠杆、合理估值。
+2. A 股牛散线索：股东变化、回购、股权激励、隐形冠军、周期拐点。
+3. A 股排雷：ST/退市风险、商誉减值、现金流利润背离、高质押、问询函、频繁减持。
+4. 独立股票主流程：不直接使用 `xueqiu-core-pool-screener` 的排名，独立生成股票综合分。
+5. 雪球核心池交叉验证：仅作为“命中/未命中”验证标签。
+6. 知乎式高质量选股原则：逻辑简单、可重复、重视基本面验证、避免故事股、控制观察池规模。
 
-## Default Selection Logic
+## 打分权重
 
-Stocks:
+股票评分：
 
-1. Pull current financial report data and quote/valuation data.
-2. Score independently with the one-click watchlist scorecard:
-   - Quality/value fundamentals
-   - Growth and industry trend
-   - Cash flow and balance sheet
-   - Valuation safety margin
-   - Red-flag cleanliness
-   - Liquidity and trackability
-3. Exclude ST/退市 labels, negative or missing PE/PB, weak cash flow, tiny liquidity, and obvious data-quality failures.
-4. Penalize banks/insurance/brokers unless the user explicitly wants financial value names.
-5. Keep industry diversification and pick no more than 5 stocks.
-6. Cross-check against `xueqiu-core-screen` CSV if available and add a "雪球核心池交叉验证" field.
+| 维度 | 权重 |
+| --- | ---: |
+| 质量价值 | 30 |
+| 成长趋势 | 20 |
+| 现金流与资产负债 | 15 |
+| 估值安全边际 | 15 |
+| 排雷清洁度 | 10 |
+| 流动性与可跟踪性 | 5 |
+| 交叉验证 | 5 |
 
-ETFs:
+ETF评分：
 
-1. Prefer broad or liquid thematic ETFs that map to the user's themes.
-2. Avoid tiny scale, poor liquidity, or overly narrow products unless the theme is explicit.
-3. Include one defensive/broad-market ETF when the stock list is aggressive.
+| 维度 | 权重 |
+| --- | ---: |
+| 流动性与规模 | 25 |
+| 代表性与分散度 | 25 |
+| 费用与跟踪便利 | 15 |
+| 主题契合度 | 20 |
+| 风险控制 | 15 |
 
-Funds:
+基金评分：
 
-1. Prefer established active funds or index-enhanced funds with clear style, manager continuity, and reasonable drawdown history.
-2. Avoid chasing short-term top performers only.
-3. Mark fund data as "needs latest fund report verification" unless current holdings and manager data are checked.
+| 维度 | 权重 |
+| --- | ---: |
+| 长期业绩与回撤 | 25 |
+| 基金经理与团队稳定 | 20 |
+| 风格清晰度 | 20 |
+| 持仓质量 | 20 |
+| 费率与规模适中 | 15 |
 
-## One-Command Behavior
+## 一键执行
 
-When the user says:
+当用户说：
 
 ```text
 用 one-click-ah-watchlist 生成一键观察池
 ```
 
-Run the project script when available:
+运行：
 
 ```powershell
 python E:\ai\CodexFinance\scripts\run_one_click_watchlist.py
 ```
 
-Then summarize the generated Markdown report.
+脚本应生成：
 
-## References
+- 中文观察池报告：`notes/one-click-ah-watchlist-2026-05-31.md`
+- 入选股票 5 年日 K CSV：`data/stocks/kline/*-5y-daily.csv`
+- 入选股票 5 年日 K SVG 走势图：`notes/assets/kline/*-5y-daily.svg`
 
-- Read `references/strategy-summary.md` for the combined strategy summary.
-- Use `xueqiu-core-pool-screener` only for cross-validation, not as the primary stock source.
-- Use `equity-research-assistant` for follow-up single-name analysis.
+## 输出要求
+
+报告必须包含：
+
+1. 打分策略与权重。
+2. 股票、ETF、基金综合得分 Top 10 以内观察池。
+3. 每个标的的入选理由和主要风险。
+4. 入选股票的 5 年日 K 走势图片。
+5. 后续人工核验清单。
+
+## 参考
+
+- `references/strategy-summary.md`：组合策略来源与解释。
+- `xueqiu-core-pool-screener`：仅做交叉验证，不作为主排名来源。
+- `equity-research-assistant`：用于单个标的深度分析。

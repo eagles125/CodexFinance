@@ -1,41 +1,40 @@
-# Combined One-Click Watchlist Strategy
+# 一键观察池组合策略
 
-## Source Inputs
+## 来源输入
 
-- Buffett-style quality value investing principles.
-- A-share super-investor and shareholder-clue investing heuristics.
-- A-share red-flag risk control framework.
-- Xueqiu core-pool screening workflow from `https://xueqiu.com/1604026436/343442117`, used as a cross-check rather than the primary stock source.
-- Zhihu question `https://www.zhihu.com/question/57199649`.
+- 巴菲特式质量价值投资原则。
+- A 股牛散和股东线索类投资启发。
+- A 股排雷框架。
+- 雪球核心池筛选流程 `https://xueqiu.com/1604026436/343442117`，只用于交叉验证。
+- 知乎问题 `https://www.zhihu.com/question/57199649`。
 
-## Zhihu Access Note
+## 知乎访问说明
 
-The Zhihu page returned HTTP 403 during automated access on 2026-05-31. The strategy here summarizes commonly visible high-quality Zhihu-style stock-selection heuristics rather than claiming a complete extraction of every high-vote answer. If the user provides copied answer text, update this reference with exact user-provided excerpts and tighten the rules.
+2026-05-31 自动访问知乎页面时返回 HTTP 403，因此这里不声称完整提取了所有高赞回答。当前策略只汇总公开可概括的高质量选股原则：逻辑简单、可重复、重视基本面验证、避免只听故事、控制观察池规模。若用户提供高赞回答正文，应再精确更新本文件。
 
-## Strategy Summary
+## 策略摘要
 
-The combined strategy is:
+组合策略为：
 
-1. Use this skill's independent hard filters to narrow the universe.
-2. Prefer companies with real profit growth, healthy cash flow, low leverage, and acceptable valuation.
-3. Use qualitative business judgment: industry space, competitive advantage, management, and long-term demand.
-4. Avoid story-only names and companies with accounting or governance red flags.
-5. Use shareholder/institutional clues only as a secondary signal, never as the primary reason.
-6. Diversify across stocks, ETFs, and funds to reduce single-name risk.
-7. Keep the final list small enough for manual tracking.
-8. Cross-check selected stocks against the Xueqiu core-pool result if available, but do not let that result determine the list.
-9. Continuously verify with announcements, financial reports, and price/valuation changes.
+1. 用本技能自己的硬筛和综合分缩小股票范围。
+2. 优先选择真实利润增长、现金流健康、杠杆可控、估值可接受的公司。
+3. 加入定性判断：行业空间、竞争优势、管理层、长期需求。
+4. 避免只有故事、没有财务验证的公司。
+5. 股东/机构线索只作为辅助信号，不能作为核心买点。
+6. 用股票、ETF、基金组合降低单一股票风险。
+7. 保持观察池足够小，便于人工持续跟踪。
+8. 与雪球核心池做交叉验证，但不让它决定最终名单。
+9. 持续用公告、财报、价格和估值变化复核。
 
-## Primary Stock Flow
+## 主流程
 
-The stock flow must run independently:
+股票主流程必须独立运行：
 
-1. Fetch financial report data.
-2. Fetch current quote, PE/PB, liquidity, and market value data.
-3. Apply red-flag exclusions.
-4. Score candidates using the one-click scorecard.
-5. Diversify by industry.
-6. Add a cross-check column showing whether each selected name also appears in `xueqiu-core-screen`.
+1. 读取或生成独立股票筛选数据。
+2. 使用质量价值、成长趋势、现金流、估值、排雷、流动性、交叉验证评分。
+3. 按行业分散，股票最多 5 支。
+4. 股票、ETF、基金统一按综合分排序，合计不超过 10 支。
+5. 对入选股票拉取近 5 年日 K，并在观察池报告中展示走势。
 
 ## Scoring Weights
 
