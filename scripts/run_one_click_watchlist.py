@@ -54,6 +54,8 @@ FUND_POOL = [
     ("161005", "富国天惠成长混合", "长期成长", 75, "长期成长风格样本，适合观察主动成长基金。", "风格和阶段性回撤需复核。"),
 ]
 
+MIN_5Y_CAGR = 30.0
+
 
 def to_float(value: str | None) -> float | None:
     try:
@@ -200,6 +202,20 @@ def write_svg_chart(item: dict[str, str], rows: list[list[str]]) -> Path:
     return path
 
 
+def calc_cagr(rows: list[list[str]]) -> float | None:
+    closes = [(r[0], to_float(r[2])) for r in rows if len(r) >= 3 and to_float(r[2]) is not None]
+    if len(closes) < 2:
+        return None
+    first = closes[0][1]
+    last = closes[-1][1]
+    if not first or not last or first <= 0:
+        return None
+    years = len(closes) / 252
+    if years <= 0:
+        return None
+    return ((last / first) ** (1 / years) - 1) * 100
+
+
 def make_item(category: str, code: str, name: str, direction: str, score: float, reason: str, risk: str) -> dict[str, str]:
     return {
         "类别": category,
@@ -220,20 +236,36 @@ def main() -> None:
     ]
     etf_items = [make_item("ETF", *row) for row in ETF_POOL]
     fund_items = [make_item("基金", *row) for row in FUND_POOL]
-    all_items = sorted(stock_items + etf_items + fund_items, key=lambda r: to_float(r["综合得分"]) or 0, reverse=True)[:10]
-    # Keep at most five per category after global ranking.
+    candidates = sorted(stock_items + etf_items + fund_items, key=lambda r: to_float(r["综合得分"]) or 0, reverse=True)
+    qualified: list[tuple[dict[str, str], list[list[str]], float]] = []
+    rejected: list[tuple[dict[str, str], str]] = []
+    for item in candidates:
+        rows = fetch_item_kline(item)
+        cagr = calc_cagr(rows)
+        if cagr is None:
+            rejected.append((item, "5年走势数据不足，无法计算年化收益"))
+            continue
+        item["5年年化收益率"] = f"{cagr:.2f}%"
+        if cagr < MIN_5Y_CAGR:
+            rejected.append((item, f"5年年化收益率 {cagr:.2f}% 低于 {MIN_5Y_CAGR:.0f}% 硬门槛"))
+            continue
+        qualified.append((item, rows, cagr))
+
+    # Keep at most five per category after annualized-return filtering and global ranking.
     counts: dict[str, int] = {}
     final_items: list[dict[str, str]] = []
-    for item in all_items:
+    final_rows: dict[str, list[list[str]]] = {}
+    for item, rows, _ in sorted(qualified, key=lambda x: to_float(x[0]["综合得分"]) or 0, reverse=True):
         counts[item["类别"]] = counts.get(item["类别"], 0) + 1
         if counts[item["类别"]] <= 5:
             final_items.append(item)
+            final_rows[item["类别"] + item["代码"]] = rows
         if len(final_items) >= 10:
             break
 
     charts = []
     for item in final_items:
-        rows = fetch_item_kline(item)
+        rows = final_rows[item["类别"] + item["代码"]]
         csv_path = write_kline_csv(item, rows)
         chart_path = write_svg_chart(item, rows)
         charts.append((item, csv_path, chart_path))
@@ -243,7 +275,7 @@ def main() -> None:
         "",
         f"生成时间：{datetime.now().isoformat(timespec='seconds')}",
         "策略：`one-click-ah-watchlist`",
-        "约束：股票、ETF、基金每类不超过 5 支，合计不超过 10 支；按综合得分排序取 Top 10 以内。",
+        f"约束：股票、ETF、基金每类不超过 5 支，合计不超过 10 支；5年年化收益率必须 >= {MIN_5Y_CAGR:.0f}%；按综合得分排序取 Top 10 以内。",
         "用途：研究观察池，不构成投资建议。",
         "",
         "## 打分策略与权重",
@@ -278,7 +310,19 @@ def main() -> None:
         "| ---: | --- | --- | --- | --- | ---: | --- | --- |",
     ]
     for idx, item in enumerate(final_items, 1):
-        lines.append(f"| {idx} | {item['类别']} | {item['代码']} | {item['名称']} | {item['方向']} | {item['综合得分']} | {item['入选理由']} | {item['主要风险']} |")
+        reason = item["入选理由"] + f" 5年年化收益率：{item['5年年化收益率']}。"
+        lines.append(f"| {idx} | {item['类别']} | {item['代码']} | {item['名称']} | {item['方向']} | {item['综合得分']} | {reason} | {item['主要风险']} |")
+    if not final_items:
+        lines.append(f"| - | - | - | - | - | - | 当前候选池没有标的满足 5年年化收益率 >= {MIN_5Y_CAGR:.0f}% 的硬门槛。 | 放宽阈值或扩大候选池后再筛选。 |")
+    lines += [
+        "",
+        "## 硬门槛剔除记录",
+        "",
+        "| 类别 | 代码 | 名称 | 剔除原因 |",
+        "| --- | --- | --- | --- |",
+    ]
+    for item, reason in rejected:
+        lines.append(f"| {item['类别']} | {item['代码']} | {item['名称']} | {reason} |")
     lines += [
         "",
         "## 入选标的5年走势",
