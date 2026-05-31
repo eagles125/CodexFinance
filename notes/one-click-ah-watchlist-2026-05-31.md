@@ -1,6 +1,6 @@
 # 一键 A股/港股观察池
 
-生成时间：2026-05-31T16:39:36
+生成时间：2026-05-31T17:23:02
 策略：`one-click-ah-watchlist`
 约束：股票、ETF、基金每类不超过 5 支，合计不超过 10 支；按综合得分排序取 Top 10 以内。
 用途：研究观察池，不构成投资建议。
@@ -54,25 +54,67 @@
 | 9 | 股票 | 002602 | 世纪华通 | 游戏Ⅱ | 73.99 | 独立综合分 73.99；PE 17.11，PB 3.37；雪球交叉验证：未命中。 | 需核验一次性收益、现金流持续性、公告风险、行业景气高点和估值口径。 |
 | 10 | 股票 | 002170 | 芭田股份 | 农化制品 | 70.45 | 独立综合分 70.45；PE 10.99，PB 3.19；雪球交叉验证：未命中。 | 需核验一次性收益、现金流持续性、公告风险、行业景气高点和估值口径。 |
 
-## 入选股票5年日K走势
+## 入选标的5年走势
 
-### 000600 建投能源
+### ETF 510300.SH 沪深300ETF
 
-日K数据：`data\stocks\kline\000600-5y-daily.csv`
+走势数据：`data\market\kline\ETF-510300SH-5y-daily.csv`
 
-![000600 5年日K走势](assets/kline/000600-5y-daily.svg)
+![510300.SH 5年走势](assets/kline/ETF-510300SH-5y-daily.svg)
 
-### 002602 世纪华通
+### ETF 159915.SZ 创业板ETF
 
-日K数据：`data\stocks\kline\002602-5y-daily.csv`
+走势数据：`data\market\kline\ETF-159915SZ-5y-daily.csv`
 
-![002602 5年日K走势](assets/kline/002602-5y-daily.svg)
+![159915.SZ 5年走势](assets/kline/ETF-159915SZ-5y-daily.svg)
 
-### 002170 芭田股份
+### ETF 512760.SH 芯片ETF
 
-日K数据：`data\stocks\kline\002170-5y-daily.csv`
+走势数据：`data\market\kline\ETF-512760SH-5y-daily.csv`
 
-![002170 5年日K走势](assets/kline/002170-5y-daily.svg)
+![512760.SH 5年走势](assets/kline/ETF-512760SH-5y-daily.svg)
+
+### 基金 163406 兴全合润混合
+
+走势数据：`data\market\kline\基金-163406-5y-daily.csv`
+
+![163406 5年走势](assets/kline/基金-163406-5y-daily.svg)
+
+### ETF 513130.SH 恒生科技ETF
+
+走势数据：`data\market\kline\ETF-513130SH-5y-daily.csv`
+
+![513130.SH 5年走势](assets/kline/ETF-513130SH-5y-daily.svg)
+
+### 股票 000600 建投能源
+
+走势数据：`data\market\kline\股票-000600-5y-daily.csv`
+
+![000600 5年走势](assets/kline/股票-000600-5y-daily.svg)
+
+### 基金 110011 易方达优质精选系
+
+走势数据：`data\market\kline\基金-110011-5y-daily.csv`
+
+![110011 5年走势](assets/kline/基金-110011-5y-daily.svg)
+
+### 基金 161005 富国天惠成长混合
+
+走势数据：`data\market\kline\基金-161005-5y-daily.csv`
+
+![161005 5年走势](assets/kline/基金-161005-5y-daily.svg)
+
+### 股票 002602 世纪华通
+
+走势数据：`data\market\kline\股票-002602-5y-daily.csv`
+
+![002602 5年走势](assets/kline/股票-002602-5y-daily.svg)
+
+### 股票 002170 芭田股份
+
+走势数据：`data\market\kline\股票-002170-5y-daily.csv`
+
+![002170 5年走势](assets/kline/股票-002170-5y-daily.svg)
 
 ## 后续核验
 

@@ -7,7 +7,7 @@ description: 一键生成 A 股/港股研究观察池，覆盖股票、ETF、基
 
 ## 概述
 
-使用本技能生成一个足够小、便于人工跟踪的观察池，覆盖股票、ETF 和基金。输出必须包含综合得分、打分权重、入选理由、主要风险，并为入选股票生成近 5 年日 K 数据和走势图。
+使用本技能生成一个足够小、便于人工跟踪的观察池，覆盖股票、ETF 和基金。输出必须包含综合得分、打分权重、入选理由、主要风险，并为入选股票、ETF、基金生成近 5 年走势数据和走势图。
 
 ## 核心约束
 
@@ -79,8 +79,8 @@ python E:\ai\CodexFinance\scripts\run_one_click_watchlist.py
 脚本应生成：
 
 - 中文观察池报告：`notes/one-click-ah-watchlist-2026-05-31.md`
-- 入选股票 5 年日 K CSV：`data/stocks/kline/*-5y-daily.csv`
-- 入选股票 5 年日 K SVG 走势图：`notes/assets/kline/*-5y-daily.svg`
+- 入选股票/ETF/基金 5 年走势 CSV：`data/market/kline/*-5y-daily.csv`
+- 入选股票/ETF/基金 5 年 SVG 走势图：`notes/assets/kline/*-5y-daily.svg`
 
 ## 输出要求
 
@@ -89,7 +89,7 @@ python E:\ai\CodexFinance\scripts\run_one_click_watchlist.py
 1. 打分策略与权重。
 2. 股票、ETF、基金综合得分 Top 10 以内观察池。
 3. 每个标的的入选理由和主要风险。
-4. 入选股票的 5 年日 K 走势图片。
+4. 入选股票、ETF、基金的 5 年走势图片。
 5. 后续人工核验清单。
 
 ## 参考

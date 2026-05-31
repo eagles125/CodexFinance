@@ -5,13 +5,14 @@ import json
 import math
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 
 ROOT = Path(r"E:\ai\CodexFinance")
 REPORT = ROOT / "notes" / "one-click-ah-watchlist-2026-05-31.md"
 INDEPENDENT_CSV = ROOT / "data" / "stocks" / "one-click-independent-stock-screen-2026-05-31.csv"
-KLINE_DIR = ROOT / "data" / "stocks" / "kline"
+KLINE_DIR = ROOT / "data" / "market" / "kline"
 CHART_DIR = ROOT / "notes" / "assets" / "kline"
 
 STOCK_WEIGHT = {
@@ -104,12 +105,16 @@ def choose_stocks(limit: int = 5) -> list[dict[str, str]]:
     return selected
 
 
-def stock_market_code(code: str) -> str:
-    return ("sh" if code.startswith(("60", "68", "90")) else "sz") + code
+def exchange_market_code(code: str) -> str:
+    raw = code.split(".")[0]
+    suffix = code.split(".")[1] if "." in code else ""
+    if suffix == "SH" or raw.startswith(("60", "68", "90", "51")):
+        return "sh" + raw
+    return "sz" + raw
 
 
-def fetch_kline(code: str) -> list[list[str]]:
-    market_code = stock_market_code(code)
+def fetch_exchange_kline(code: str) -> list[list[str]]:
+    market_code = exchange_market_code(code)
     url = f"https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={market_code},day,,,1200,qfq"
     req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urlopen(req, timeout=30) as resp:
@@ -118,9 +123,35 @@ def fetch_kline(code: str) -> list[list[str]]:
     return data.get("qfqday") or data.get("day") or []
 
 
-def write_kline_csv(code: str, rows: list[list[str]]) -> Path:
+def fetch_fund_nav(code: str, pages: int = 65) -> list[list[str]]:
+    rows: list[list[str]] = []
+    for page in range(1, pages + 1):
+        params = urlencode({"fundCode": code, "pageIndex": page, "pageSize": 20})
+        url = f"https://api.fund.eastmoney.com/f10/lsjz?{params}"
+        req = Request(url, headers={"User-Agent": "Mozilla/5.0", "Referer": "https://fundf10.eastmoney.com/"})
+        with urlopen(req, timeout=30) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+        items = payload.get("Data", {}).get("LSJZList", [])
+        if not items:
+            break
+        for item in items:
+            date = item.get("FSRQ", "")
+            nav = item.get("DWJZ", "")
+            rows.append([date, nav, nav, nav, nav, ""])
+    rows.sort(key=lambda r: r[0])
+    return rows[-1200:]
+
+
+def fetch_item_kline(item: dict[str, str]) -> list[list[str]]:
+    if item["类别"] == "基金":
+        return fetch_fund_nav(item["代码"])
+    return fetch_exchange_kline(item["代码"])
+
+
+def write_kline_csv(item: dict[str, str], rows: list[list[str]]) -> Path:
     KLINE_DIR.mkdir(parents=True, exist_ok=True)
-    path = KLINE_DIR / f"{code}-5y-daily.csv"
+    safe_code = item["代码"].replace(".", "")
+    path = KLINE_DIR / f"{item['类别']}-{safe_code}-5y-daily.csv"
     with path.open("w", newline="", encoding="utf-8-sig") as f:
         writer = csv.writer(f)
         writer.writerow(["date", "open", "close", "high", "low", "volume"])
@@ -128,9 +159,11 @@ def write_kline_csv(code: str, rows: list[list[str]]) -> Path:
     return path
 
 
-def write_svg_chart(code: str, name: str, rows: list[list[str]]) -> Path:
+def write_svg_chart(item: dict[str, str], rows: list[list[str]]) -> Path:
     CHART_DIR.mkdir(parents=True, exist_ok=True)
-    path = CHART_DIR / f"{code}-5y-daily.svg"
+    safe_code = item["代码"].replace(".", "")
+    path = CHART_DIR / f"{item['类别']}-{safe_code}-5y-daily.svg"
+    code, name = item["代码"], item["名称"]
     closes = [(r[0], to_float(r[2])) for r in rows if len(r) >= 3 and to_float(r[2]) is not None]
     width, height = 900, 260
     pad_l, pad_r, pad_t, pad_b = 48, 18, 24, 34
@@ -153,7 +186,7 @@ def write_svg_chart(code: str, name: str, rows: list[list[str]]) -> Path:
     ret = ((last or 0) / (first or 1) - 1) * 100 if first else 0
     svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">
 <rect width="100%" height="100%" fill="#ffffff"/>
-<text x="{pad_l}" y="18" font-size="14" font-family="Arial, sans-serif">{code} {name} 5年日K收盘走势  {start} 至 {end}  区间涨跌 {ret:.1f}%</text>
+<text x="{pad_l}" y="18" font-size="14" font-family="Arial, sans-serif">{code} {name} 5年走势  {start} 至 {end}  区间涨跌 {ret:.1f}%</text>
 <line x1="{pad_l}" y1="{pad_t}" x2="{pad_l}" y2="{height-pad_b}" stroke="#d0d7de"/>
 <line x1="{pad_l}" y1="{height-pad_b}" x2="{width-pad_r}" y2="{height-pad_b}" stroke="#d0d7de"/>
 <text x="4" y="{pad_t+5}" font-size="11" font-family="Arial, sans-serif">{hi:.2f}</text>
@@ -198,14 +231,12 @@ def main() -> None:
         if len(final_items) >= 10:
             break
 
-    stock_charts = []
+    charts = []
     for item in final_items:
-        if item["类别"] != "股票":
-            continue
-        rows = fetch_kline(item["代码"])
-        csv_path = write_kline_csv(item["代码"], rows)
-        chart_path = write_svg_chart(item["代码"], item["名称"], rows)
-        stock_charts.append((item, csv_path, chart_path))
+        rows = fetch_item_kline(item)
+        csv_path = write_kline_csv(item, rows)
+        chart_path = write_svg_chart(item, rows)
+        charts.append((item, csv_path, chart_path))
 
     lines = [
         "# 一键 A股/港股观察池",
@@ -250,18 +281,18 @@ def main() -> None:
         lines.append(f"| {idx} | {item['类别']} | {item['代码']} | {item['名称']} | {item['方向']} | {item['综合得分']} | {item['入选理由']} | {item['主要风险']} |")
     lines += [
         "",
-        "## 入选股票5年日K走势",
+        "## 入选标的5年走势",
         "",
     ]
-    for item, csv_path, chart_path in stock_charts:
+    for item, csv_path, chart_path in charts:
         rel_csv = csv_path.relative_to(ROOT)
         rel_chart = chart_path.relative_to(REPORT.parent)
         lines += [
-            f"### {item['代码']} {item['名称']}",
+            f"### {item['类别']} {item['代码']} {item['名称']}",
             "",
-            f"日K数据：`{rel_csv}`",
+            f"走势数据：`{rel_csv}`",
             "",
-            f"![{item['代码']} 5年日K走势]({rel_chart.as_posix()})",
+            f"![{item['代码']} 5年走势]({rel_chart.as_posix()})",
             "",
         ]
     lines += [
@@ -276,7 +307,7 @@ def main() -> None:
     ]
     REPORT.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(REPORT)
-    print(f"items={len(final_items)} stocks={sum(i['类别']=='股票' for i in final_items)} etfs={sum(i['类别']=='ETF' for i in final_items)} funds={sum(i['类别']=='基金' for i in final_items)} charts={len(stock_charts)}")
+    print(f"items={len(final_items)} stocks={sum(i['类别']=='股票' for i in final_items)} etfs={sum(i['类别']=='ETF' for i in final_items)} funds={sum(i['类别']=='基金' for i in final_items)} charts={len(charts)}")
 
 
 if __name__ == "__main__":
