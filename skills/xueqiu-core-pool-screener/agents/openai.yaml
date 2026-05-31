@@ -1,0 +1,4 @@
+interface:
+  display_name: "雪球核心池选股策略"
+  short_description: "核心股票池筛选、AI打分与行业分散"
+  default_prompt: "使用雪球核心池选股策略，为A股或港股建立候选池、打分并输出观察名单。"
